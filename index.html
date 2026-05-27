@@ -991,23 +991,23 @@ const DARK_THEMES = {
 
 // ─── State ─────────────────────────────────────────────────────────────────
 
-function loadS() { try { return JSON.parse(localStorage.getItem('dc2_s') || '{}'); } catch { return {}; } }
-function saveS() { localStorage.setItem('dc2_s', JSON.stringify(S)); }
+function loadS() { try { return JSON.parse(localStorage.getItem('dc2_s3') || '{}'); } catch { return {}; } }
+function saveS() { localStorage.setItem('dc2_s3', JSON.stringify(S)); }
 const ALL_CARD_IDS = ['card-measure','card-temp','card-fx','card-time'];
 
 const S = Object.assign({
   tzLeft:'New York', tzRight:'Melbourne',
   tempCity:'New York',
   fxFrom:'USD', fxTo:'AUD',
-  accent:'#EEF4B0',
-  cardOrder: [...ALL_CARD_IDS],
+  accent:'blend-flame',
+  cardOrder: ['card-temp','card-measure','card-fx','card-time'],
 }, loadS());
-// Validate saved accent — fall back to butter if from an older version
-if (!ACCENTS.includes(S.accent)) S.accent = '#EEF4B0';
+// Validate saved accent — fall back to blend-flame if from an older version
+if (!ACCENTS.includes(S.accent)) S.accent = 'blend-flame';
 // Validate cardOrder — ensure all 4 cards are present (handles version upgrades)
 if (!Array.isArray(S.cardOrder) || S.cardOrder.length !== 4 ||
     !ALL_CARD_IDS.every(id => S.cardOrder.includes(id))) {
-  S.cardOrder = [...ALL_CARD_IDS];
+  S.cardOrder = ['card-temp','card-measure','card-fx','card-time'];
 }
 
 // Temp UI state for pickers
