@@ -888,17 +888,16 @@ const CURRENCIES = [
   { code:'SGD', sym:'S$',  name:'Singapore Dollar' },
   { code:'HKD', sym:'HK$', name:'Hong Kong Dollar' },
   { code:'KRW', sym:'₩',   name:'South Korean Won' },
+  { code:'MXN', sym:'MX$', name:'Mexican Peso' },
+  { code:'VND', sym:'₫',   name:'Vietnamese Dong' },
 ];
 
 // Accent options — distinct hues across the spectrum
 // 6 light (2 rows × 3) + 3 dark (1 row × 3) = 9 total
 const LIGHT_ACCENTS = [
-  '#F4B0B0', // rose
-  '#F4C8A0', // peach
+  '#F4B0B0', // pink
   '#EEF4B0', // butter
-  '#B4F0B0', // lime
-  '#B0D4F4', // sky
-  '#D4B0F4', // lavender
+  '#B0D4F4', // blue
 ];
 const DARK_ACCENTS = [
   '#1E1E1E', // charcoal grey
@@ -930,6 +929,24 @@ const BLEND_THEMES = {
     accent: '#70C060',
     cream: '#F0F6EE', haze: '#D6DCD5',
     swatch: 'linear-gradient(135deg, #88D470 50%, #E08AB8 50%)',
+  },
+  'blend-citrus': {
+    wa: '#F0E060', wb: '#80E860',       // lemon × lime → vivid chartreuse at overlap
+    accent: '#A0C840',
+    cream: '#F6F6E8', haze: '#DCDDD0',
+    swatch: 'linear-gradient(135deg, #F0E060 50%, #80E860 50%)',
+  },
+  'blend-twilight': {
+    wa: '#7060E0', wb: '#E06090',       // indigo × rose → deep violet at overlap
+    accent: '#9060C0',
+    cream: '#F4EEF8', haze: '#D8D0DC',
+    swatch: 'linear-gradient(135deg, #7060E0 50%, #E06090 50%)',
+  },
+  'blend-sherbet': {
+    wa: '#FF8840', wb: '#C098F0',       // tangerine × violet → warm rust at overlap
+    accent: '#E07840',
+    cream: '#FAF0EC', haze: '#DDDAD8',
+    swatch: 'linear-gradient(135deg, #FF8840 50%, #C098F0 50%)',
   },
 };
 const BLEND_ACCENTS = Object.keys(BLEND_THEMES);
