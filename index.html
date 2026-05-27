@@ -64,7 +64,30 @@
     .view.active { display: flex; }
 
     /* ─── Wash blobs ─────────────────────────────────────────────────────── */
-    .wash { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .wash { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; isolation: isolate; }
+
+    /* ─── Blend shapes (semi-hard, mix-blend-mode: multiply) ───────────── */
+    .wb {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      mix-blend-mode: multiply; filter: blur(18px); opacity: 0;
+      transition: opacity 500ms cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-blend] .wb { opacity: 1; }
+    /* Hide standard blobs when blend accent is active */
+    [data-blend] .wash::before,
+    [data-blend] .wash::after { opacity: 0; transition: opacity 400ms; }
+    .wb-a {
+      width: 72%; height: 68%; top: -12%; left: -8%;
+      background: var(--wb-a, transparent);
+      animation: wash-a 24s ease-in-out infinite;
+    }
+    .wb-b {
+      width: 68%; height: 72%; bottom: -14%; right: -8%;
+      background: var(--wb-b, transparent);
+      animation: wash-b 30s ease-in-out infinite;
+    }
+    [data-theme="dark"] .wb-a,
+    [data-theme="dark"] .wb-b { mix-blend-mode: screen; }
     .wash::before, .wash::after { content: ""; position: absolute; }
     .wash::before {
       width: 95%; height: 80%; top: -18%; left: -8%;
@@ -311,28 +334,17 @@
     .card-hd { user-select: none; -webkit-user-select: none; }
     .card-hd-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
 
-    /* Ticker — fades in when closed (body leads by 120ms), out fast on open */
-    .card-ticker {
-      font-size: 11px; color: var(--ink-muted);
-      letter-spacing: 0.08px; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; max-width: 110px;
-      opacity: 0;
-      transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    /* Card order buttons (settings) */
+    .order-btn {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: rgba(11,11,11,0.07); color: var(--ink);
+      font-size: 13px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background var(--fast) var(--ease);
     }
-    .card.is-closed .card-ticker {
-      opacity: 1;
-      transition: opacity 300ms 120ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    /* Chevron — tracks open/close */
-    .card-chevron {
-      flex-shrink: 0; color: var(--ink-subtle);
-      transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .card.is-closed .card-chevron {
-      transform: rotate(-90deg);
-      transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
+    .order-btn:active { background: rgba(11,11,11,0.16); }
+    .order-btn:disabled { opacity: 0.25; pointer-events: none; }
+    [data-theme="dark"] .order-btn { background: rgba(220,219,202,0.10); }
+    [data-theme="dark"] .order-btn:active { background: rgba(220,219,202,0.20); }
 
     /* Body wrap — grid-template-rows set by JS; no CSS transition needed here */
     .card-body-wrap { flex: 1; min-height: 0; display: grid; grid-template-rows: 1fr; }
@@ -541,7 +553,10 @@
 </head>
 <body>
 <div id="app">
-  <div class="wash"></div>
+  <div class="wash">
+    <div class="wb wb-a"></div>
+    <div class="wb wb-b"></div>
+  </div>
   <div class="grain"></div>
 
   <!-- ─── Home view ──────────────────────────────────────────────────── -->
@@ -555,12 +570,6 @@
       <div class="card" id="card-measure">
         <div class="card-hd">
           <span class="card-label">Measurement</span>
-          <div class="card-hd-right">
-            <span class="card-ticker" id="ticker-measure"></span>
-            <svg class="card-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
         </div>
         <div class="card-body-wrap">
           <div class="card-body-inner">
@@ -589,16 +598,10 @@
       <div class="card" id="card-temp">
         <div class="card-hd">
           <span class="card-label">Temperature</span>
-          <div class="card-hd-right">
-            <span class="card-ticker" id="ticker-temp"></span>
-            <span class="live-badge">
+          <span class="live-badge">
               <span class="live-dot muted" id="temp-dot"></span>
               <span id="temp-badge">Locating…</span>
             </span>
-            <svg class="card-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
         </div>
         <div class="card-body-wrap">
           <div class="card-body-inner">
@@ -627,16 +630,10 @@
       <div class="card" id="card-fx">
         <div class="card-hd">
           <span class="card-label">Currency</span>
-          <div class="card-hd-right">
-            <span class="card-ticker" id="ticker-fx"></span>
-            <span class="live-badge">
-              <span class="live-dot muted" id="fx-dot"></span>
-              <span id="fx-badge">Fetching…</span>
-            </span>
-            <svg class="card-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+          <span class="live-badge">
+            <span class="live-dot muted" id="fx-dot"></span>
+            <span id="fx-badge">Fetching…</span>
+          </span>
         </div>
         <div class="card-body-wrap">
           <div class="card-body-inner">
@@ -667,13 +664,7 @@
       <div class="card" id="card-time">
         <div class="card-hd">
           <span class="card-label">Time</span>
-          <div class="card-hd-right">
-            <span class="card-ticker" id="ticker-time"></span>
-            <span class="live-badge"><span class="live-dot"></span><span>Live</span></span>
-            <svg class="card-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
+          <span class="live-badge"><span class="live-dot"></span><span>Live</span></span>
         </div>
         <div class="card-body-wrap">
           <div class="card-body-inner">
@@ -768,6 +759,13 @@
       </div>
 
       <div class="settings-section">
+        <div class="settings-section-label">Card Order</div>
+        <div class="settings-card" id="card-order-list">
+          <!-- populated by renderCardOrder() -->
+        </div>
+      </div>
+
+      <div class="settings-section">
         <div class="settings-section-label">Appearance</div>
         <div class="settings-card">
           <div class="settings-row" id="set-color-row">
@@ -810,6 +808,8 @@
       <div id="accent-swatches-light" class="accent-swatches"></div>
       <div class="accent-section-label" style="position:relative">Multicolor</div>
       <div id="accent-swatches-grad" class="accent-swatches"></div>
+      <div class="accent-section-label" style="position:relative">Blend</div>
+      <div id="accent-swatches-blend" class="accent-swatches"></div>
       <div class="accent-section-label" style="position:relative">Dark Mode</div>
       <div id="accent-swatches-dark" class="accent-swatches accent-swatches-dark"></div>
       <div class="modal-actions">
@@ -910,7 +910,31 @@ const GRADIENT_ACCENTS = [
   'grad-aurora',  // teal → sky
   'grad-dusk',    // purple → rose
 ];
-const ACCENTS = [...LIGHT_ACCENTS, ...GRADIENT_ACCENTS, ...DARK_ACCENTS];
+// Blend themes — two semi-hard shapes, multiply blend creates a third color at overlap
+// wa/wb = shape colors; swatch = what to show in the color picker
+const BLEND_THEMES = {
+  'blend-flame': {
+    wa: '#FF9070', wb: '#FFD060',       // coral × amber → flame orange at overlap
+    accent: '#FF8050',
+    cream: '#FBF0EC', haze: '#DED9D5',
+    swatch: 'linear-gradient(135deg, #FF9070 50%, #FFD060 50%)',
+  },
+  'blend-tide': {
+    wa: '#5EC8C0', wb: '#8090E0',       // aqua × periwinkle → deep ocean blue at overlap
+    accent: '#5AB8D0',
+    cream: '#EEF4F6', haze: '#D4DADC',
+    swatch: 'linear-gradient(135deg, #5EC8C0 50%, #8090E0 50%)',
+  },
+  'blend-grove': {
+    wa: '#88D470', wb: '#E08AB8',       // sage × dusty rose → warm olive at overlap
+    accent: '#70C060',
+    cream: '#F0F6EE', haze: '#D6DCD5',
+    swatch: 'linear-gradient(135deg, #88D470 50%, #E08AB8 50%)',
+  },
+};
+const BLEND_ACCENTS = Object.keys(BLEND_THEMES);
+
+const ACCENTS = [...LIGHT_ACCENTS, ...GRADIENT_ACCENTS, ...BLEND_ACCENTS, ...DARK_ACCENTS];
 
 // Coordinated light theme palettes per accent
 const LIGHT_THEMES = {
@@ -952,14 +976,22 @@ const DARK_THEMES = {
 
 function loadS() { try { return JSON.parse(localStorage.getItem('dc2_s') || '{}'); } catch { return {}; } }
 function saveS() { localStorage.setItem('dc2_s', JSON.stringify(S)); }
+const ALL_CARD_IDS = ['card-measure','card-temp','card-fx','card-time'];
+
 const S = Object.assign({
   tzLeft:'New York', tzRight:'Melbourne',
   tempCity:'New York',
   fxFrom:'USD', fxTo:'AUD',
   accent:'#EEF4B0',
+  cardOrder: [...ALL_CARD_IDS],
 }, loadS());
 // Validate saved accent — fall back to butter if from an older version
 if (!ACCENTS.includes(S.accent)) S.accent = '#EEF4B0';
+// Validate cardOrder — ensure all 4 cards are present (handles version upgrades)
+if (!Array.isArray(S.cardOrder) || S.cardOrder.length !== 4 ||
+    !ALL_CARD_IDS.every(id => S.cardOrder.includes(id))) {
+  S.cardOrder = [...ALL_CARD_IDS];
+}
 
 // Temp UI state for pickers
 let _colorPickerAccent = S.accent;
@@ -1008,18 +1040,28 @@ function closeOverlay(id) { $(id).classList.remove('active'); }
 // ─── Accent / theme ────────────────────────────────────────────────────────
 
 function applyAccent(key) {
-  const dark = DARK_THEMES[key];
-  const grad = GRADIENT_THEMES[key];
-  const root = document.documentElement;
+  const dark  = DARK_THEMES[key];
+  const grad  = GRADIENT_THEMES[key];
+  const blend = BLEND_THEMES[key];
+  const root  = document.documentElement;
 
   // Clear any previous inline overrides
-  ['--cream','--haze','--accent','--accent-blob'].forEach(p => root.style.removeProperty(p));
+  ['--cream','--haze','--accent','--accent-blob','--wb-a','--wb-b'].forEach(p => root.style.removeProperty(p));
+  root.removeAttribute('data-blend');
 
   if (dark) {
     root.setAttribute('data-theme', 'dark');
     root.style.setProperty('--accent', dark.accent);
     root.style.setProperty('--cream',  dark.cream);
     root.style.setProperty('--haze',   dark.haze);
+  } else if (blend) {
+    root.removeAttribute('data-theme');
+    root.setAttribute('data-blend', '1');
+    root.style.setProperty('--accent', blend.accent);
+    root.style.setProperty('--cream',  blend.cream);
+    root.style.setProperty('--haze',   blend.haze);
+    root.style.setProperty('--wb-a',   blend.wa);
+    root.style.setProperty('--wb-b',   blend.wb);
   } else if (grad) {
     root.removeAttribute('data-theme');
     root.style.setProperty('--accent',      grad.accent);
@@ -1040,26 +1082,28 @@ function applyAccent(key) {
 }
 
 function syncColorDot() {
-  const grad = GRADIENT_THEMES[S.accent];
-  const dark = DARK_THEMES[S.accent];
-  const dot  = $('set-color-dot');
-  // Gradient → show the gradient; dark → show dark hex; light → show accent hex
-  dot.style.background = grad ? grad.blob : S.accent;
+  const grad  = GRADIENT_THEMES[S.accent];
+  const blend = BLEND_THEMES[S.accent];
+  const dot   = $('set-color-dot');
+  // Gradient → show gradient; blend → show split swatch; dark/light → show hex
+  dot.style.background = grad ? grad.blob : blend ? blend.swatch : S.accent;
 }
 
 // ─── Color picker modal ────────────────────────────────────────────────────
 
 function buildColorSwatches() {
-  const ALL_GRIDS = ['accent-swatches-light','accent-swatches-grad','accent-swatches-dark'];
+  const ALL_GRIDS = ['accent-swatches-light','accent-swatches-grad','accent-swatches-blend','accent-swatches-dark'];
 
   function populateGrid(gridId, accents) {
     const wrap = $(gridId);
+    if (!wrap) return;
     wrap.innerHTML = '';
     accents.forEach(key => {
-      const grad = GRADIENT_THEMES[key];
+      const grad  = GRADIENT_THEMES[key];
+      const blend = BLEND_THEMES[key];
       const b = document.createElement('button');
       b.className = 'accent-swatch' + (key === _colorPickerAccent ? ' active' : '');
-      b.style.background = grad ? grad.blob : key;
+      b.style.background = grad ? grad.blob : blend ? blend.swatch : key;
       b.dataset.color = key;
       b.addEventListener('click', () => {
         _colorPickerAccent = key;
@@ -1074,6 +1118,7 @@ function buildColorSwatches() {
 
   populateGrid('accent-swatches-light', LIGHT_ACCENTS);
   populateGrid('accent-swatches-grad',  GRADIENT_ACCENTS);
+  populateGrid('accent-swatches-blend', BLEND_ACCENTS);
   populateGrid('accent-swatches-dark',  DARK_ACCENTS);
 }
 
@@ -1310,7 +1355,6 @@ function updateClocks() {
   $('tz-r-city').textContent = R.name.toUpperCase();
   $('tz-r-time').innerHTML   = fmtTimeHtml(R.tz);
   $('tz-r-date').textContent = dateFmt(R.tz);
-  if (typeof updateTickers === 'function') updateTickers();
 }
 updateClocks();
 setInterval(updateClocks, 1000);
@@ -1361,30 +1405,6 @@ function openCard(id) {
   });
 }
 
-function updateTickers() {
-  const lenIn = ($('len-in')?.value  || '').trim();
-  const lenCm = ($('len-cm')?.value  || '').trim();
-  $('ticker-measure').textContent = `${lenIn || '—'}″ = ${lenCm || '—'} cm`;
-
-  const tempF = ($('temp-f')?.value || '').trim();
-  const tempC = ($('temp-c')?.value || '').trim();
-  $('ticker-temp').textContent = `${tempF || '—'}°F = ${tempC || '—'}°C`;
-
-  const fxL    = ($('fx-left')?.value  || '').trim();
-  const fxR    = ($('fx-right')?.value || '').trim();
-  const fSym   = getCurr(S.fxFrom).sym;
-  const tSym   = getCurr(S.fxTo).sym;
-  $('ticker-fx').textContent = `${fSym}${fxL || '—'} = ${tSym}${fxR || '—'}`;
-
-  const L = getCity(S.tzLeft), R = getCity(S.tzRight);
-  const lName = L.name.split(' ')[0];
-  const rName = R.name.split(' ')[0];
-  $('ticker-time').textContent = `${lName} ${timeFmt(L.tz)} · ${rName} ${timeFmt(R.tz)}`;
-}
-
-// Refresh tickers on any input change
-document.addEventListener('input', updateTickers);
-
 // Whole card is the tap target — safe because open cards guard with the _openCard check
 CARD_IDS.forEach(id => {
   const card = $(id);
@@ -1394,6 +1414,61 @@ CARD_IDS.forEach(id => {
   });
 });
 
+// ─── Card ordering ─────────────────────────────────────────────────────────
+
+const CARD_LABELS = {
+  'card-measure': 'Measurement',
+  'card-temp':    'Temperature',
+  'card-fx':      'Currency',
+  'card-time':    'Time',
+};
+
+// Reorder DOM nodes to match S.cardOrder
+function applyCardOrder() {
+  const container = document.querySelector('.cards');
+  if (!container) return;
+  S.cardOrder.forEach(id => {
+    const card = $(id);
+    if (card) container.appendChild(card);
+  });
+}
+
+// Render the card-order list in settings
+function renderCardOrder() {
+  const list = $('card-order-list');
+  if (!list) return;
+  list.innerHTML = '';
+  S.cardOrder.forEach((id, i) => {
+    const row = document.createElement('div');
+    row.className = 'settings-row';
+    row.style.cursor = 'default';
+    row.innerHTML = `
+      <span>${CARD_LABELS[id] || id}</span>
+      <div class="settings-row-right" style="gap:6px">
+        <button class="order-btn" data-dir="up"   data-id="${id}" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="order-btn" data-dir="down" data-id="${id}" ${i === S.cardOrder.length - 1 ? 'disabled' : ''}>↓</button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('.order-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id  = btn.dataset.id;
+      const dir = btn.dataset.dir;
+      const idx = S.cardOrder.indexOf(id);
+      if (dir === 'up' && idx > 0) {
+        [S.cardOrder[idx - 1], S.cardOrder[idx]] = [S.cardOrder[idx], S.cardOrder[idx - 1]];
+      } else if (dir === 'down' && idx < S.cardOrder.length - 1) {
+        [S.cardOrder[idx], S.cardOrder[idx + 1]] = [S.cardOrder[idx + 1], S.cardOrder[idx]];
+      }
+      saveS();
+      applyCardOrder();
+      renderCardOrder();
+    });
+  });
+}
+
 // ─── Init settings display ─────────────────────────────────────────────────
 
 $('set-tz-left-val').textContent  = S.tzLeft;
@@ -1402,7 +1477,8 @@ $('set-temp-city-val').textContent = S.tempCity;
 $('set-fx-from-val').textContent  = S.fxFrom;
 $('set-fx-to-val').textContent    = S.fxTo;
 applyAccent(S.accent);
-updateTickers();
+applyCardOrder();
+renderCardOrder();
 
 // ── Init: set all heights without triggering the transition ──────────────
 (function initCards() {
@@ -1413,7 +1489,7 @@ updateTickers();
     const inner = el.querySelector('.card-body-inner');
     el.style.transition    = 'none';   // suppress card height on load
     inner.style.transition = 'none';   // suppress inner opacity on load
-    if (cid === 'card-measure') {
+    if (cid === S.cardOrder[0]) {
       el.style.height = openH + 'px';
       wrap.style.gridTemplateRows = '1fr';
       el.classList.add('is-open');
@@ -1424,7 +1500,7 @@ updateTickers();
       el.classList.add('is-closed');
     }
   });
-  _openCard = 'card-measure';
+  _openCard = S.cardOrder[0];
   // Re-enable transitions after two frames so nothing fires during paint
   requestAnimationFrame(() => requestAnimationFrame(() => {
     CARD_IDS.forEach(cid => {
